@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Virtual Museum</title>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pannellum/build/pannellum.css"/>
+
+<style>
+body{
+margin:0;
+font-family:Arial;
+background:#111;
+color:white;
+}
+
+#panorama{
+width:100vw;
+height:100vh;
+}
+
+/* popup */
+#artPopup{
+display:none;
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.92);
+justify-content:center;
+align-items:center;
+flex-direction:column;
+z-index:10;
+padding:20px;
+box-sizing:border-box;
+}
+
+#artPopup img{
+max-width:80%;
+max-height:60%;
+box-shadow:0 0 25px black;
+}
+
+#artTitle{
+margin:20px 0 10px 0;
+font-size:24px;
+}
+
+#artDescription{
+max-width:80%;
+text-align:center;
+font-size:16px;
+margin-bottom:20px;
+}
+
+#closeBtn{
+padding:10px 20px;
+background:white;
+border:none;
+cursor:pointer;
+}
+
+.title{
+position:absolute;
+top:20px;
+left:20px;
+background:rgba(0,0,0,0.6);
+padding:10px;
+border-radius:6px;
+}
+
+/* paintings */
+.wallPainting{
+height:140px;
+padding:6px;
+background:#111;
+border:6px solid #c9a44c;
+box-shadow:0 6px 12px rgba(0,0,0,0.6);
+cursor:zoom-in;
+transition:transform .2s;
+}
+
+.wallPainting:hover{
+transform:scale(1.05);
+}
+
+.paintingLabel{
+font-size:12px;
+margin-top:6px;
+text-align:center;
+color:white;
+}
+
+/* arrows */
+.navArrow{
+width:50px;
+height:50px;
+cursor:pointer;
+opacity:0.85;
+transition:transform .2s;
+}
+
+.navArrow:hover{
+transform:scale(1.2);
+}
+
+/* walking hotspot */
+.walkSpot{
+width:40px;
+height:40px;
+border-radius:50%;
+background:rgba(255,255,255,0.45);
+cursor:pointer;
+box-shadow:0 0 10px white;
+transition:transform .2s;
+}
+
+.walkSpot:hover{
+transform:scale(1.25);
+}
+</style>
+</head>
+
+<body>
+
+<div class="title">
+<h2>Virtual Museum</h2>
+<p>Click paintings to view them</p>
+</div>
+
+<div id="panorama"></div>
+
+<div id="artPopup">
+<h2 id="artTitle"></h2>
+<img id="artImage">
+<p id="artDescription"></p>
+<audio id="artAudio" controls></audio>
+<button id="closeBtn">Close</button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/pannellum/build/pannellum.js"></script>
+
+<script>
+/* ---------- Open Art Popup ---------- */
+function openArt(title,image,description,audio){
+  document.getElementById("artTitle").innerText = title;
+  document.getElementById("artImage").src = image;
+  document.getElementById("artDescription").innerText = description;
+
+  const player = document.getElementById("artAudio");
+  if(audio){
+    player.src = audio;
+    player.style.display = "block";
+    player.play();
+  } else {
+    player.style.display = "none";
+  }
+
+  document.getElementById("artPopup").style.display = "flex";
+}
+
+/* ---------- Close Popup ---------- */
+document.getElementById("closeBtn").onclick = function(){
+  document.getElementById("artPopup").style.display = "none";
+}
+document.getElementById("artPopup").onclick = function(e){
+  if(e.target.id === "artPopup"){
+    this.style.display = "none";
+  }
+}
+
+/* ---------- Panoramas ---------- */
+const museumRooms = {
+  Room1: "panoramas/room1.jpg",
+  Room2: "panoramas/room2.jpg",
+  Room3: "panoramas/room3.jpg"
+};
+
+/* ---------- Descriptions for each painting ---------- */
+const paintingDescriptions = {
+"paintings/painting1.jpg": "Painting 1: If you turn your audio up, you will even hear a sound.",
+"paintings/painting2.jpg": "Painting 2: Guess which sound is coming here.",
+"paintings/painting3.jpg": "Painting 3: Ode on queer joy.",
+"paintings/painting4.jpg": "Painting 4: The rest of the images are without audios.",
+"paintings/painting5.jpg": "Painting 5: Lets roll on without captions too.",
+"paintings/painting6.jpg": "Painting 6: Lorem ipsum dolor.",
+"paintings/painting7.jpg": "Painting 7: Lorem ipsum dolor.",
+"paintings/painting8.jpg": "Painting 8: Lorem ipsum dolor.",
+"paintings/painting9.jpg": "Painting 9: Lorem ipsum dolor.",
+"paintings/painting10.jpg": "Painting 10: Lorem ipsum dolor.",
+"paintings/painting11.jpg": "Painting 11: The aim.",
+"paintings/painting12.jpg": "Painting 12: The process.",
+"paintings/painting13.jpg": "Painting 13: The result.",
+"paintings/painting14.jpg": "Painting 14: The cheerleader.",
+"paintings/painting15.jpg": "Painting 15: The result n.2.",
+"paintings/painting16.jpg": "Painting 16: Lorem ipsum dolor.",
+"paintings/painting17.jpg": "Painting 17: Lorem ipsum dolor.",
+"paintings/painting18.jpg": "Painting 18: Lorem ipsum dolor.",
+"paintings/painting19.jpg": "Painting 19: Lorem ipsum dolor.",
+"paintings/painting20.jpg": "Painting 20: Lorem ipsum dolor.",
+"paintings/painting21.jpg": "Painting 21: One of the summer latvian sunsets, somewhere on west coast.",
+"paintings/painting22.jpg": "Painting 22: Hitchiking to said west coast, getting stuck.",
+"paintings/painting23.jpg": "Painting 23: Got picked up by a girly in a van, life continues lifing.",
+"paintings/painting24.jpg": "Painting 24: Lorem ipsum dolor.",
+"paintings/painting25.jpg": "Painting 25: Lorem ipsum dolor.",
+"paintings/painting26.jpg": "Painting 26: Lorem ipsum dolor.",
+"paintings/painting27.jpg": "Painting 27: Lorem ipsum dolor.",
+"paintings/painting28.jpg": "Painting 28: Lorem ipsum dolor.",
+"paintings/painting29.jpg": "Painting 29: Lorem ipsum dolor.",
+"paintings/painting30.jpg": "Painting 30: Lorem ipsum dolor."
+};
+
+/* ---------- Preload paintings ---------- */
+Object.keys(paintingDescriptions).forEach(src=>{
+  let img = new Image();
+  img.src = src;
+});
+
+/* ---------- Wall Painting Hotspot ---------- */
+function wallPaintingHotspot(hotSpotDiv,args){
+  let container = document.createElement("div");
+  container.style.display = "flex";
+  container.style.flexDirection = "column";
+  container.style.alignItems = "center";
+
+  let img = document.createElement("img");
+  img.src = args.image;
+  img.className = "wallPainting";
+  container.appendChild(img);
+
+  let label = document.createElement("div");
+  label.className = "paintingLabel";
+  label.innerText = args.title;
+  container.appendChild(label);
+
+  hotSpotDiv.appendChild(container);
+
+  img.onclick = function(){
+    openArt(args.title,args.image,args.description,args.audio)
+  }
+}
+
+/* ---------- Navigation Arrow Hotspot ---------- */
+function navArrowHotspot(hotSpotDiv,args){
+  let img = document.createElement("img");
+  img.src = args.icon;
+  img.className = "navArrow";
+  hotSpotDiv.appendChild(img);
+
+  img.onclick = function(){
+    viewer.loadScene(args.sceneId,null,null,1000);
+  }
+}
+
+/* ---------- Floor Walking Hotspot ---------- */
+function walkHotspot(hotSpotDiv,args){
+  let circle = document.createElement("div");
+  circle.className = "walkSpot";
+  hotSpotDiv.appendChild(circle);
+
+  circle.onclick = function(){
+    viewer.loadScene(args.sceneId,null,null,1000);
+  }
+}
+
+/* ---------- Painting Hotspot Generator ---------- */
+function paintingHotspot(pitch,yaw,image,title,audio){
+  return {
+    pitch: pitch,
+    yaw: yaw,
+    type: "custom",
+    createTooltipFunc: wallPaintingHotspot,
+    createTooltipArgs: {
+      image: image,
+      title: title,
+      description: paintingDescriptions[image] || "",
+      audio: audio
+    }
+  };
+}
+
+/* ---------- Room Arrows ---------- */
+const roomArrows = {
+  Room1: "icons/arrow1.png",
+  Room2: "icons/arrow2.png",
+  Room3: "icons/arrow3.png"
+};
+
+/* Arrow Hotspot Generator */
+function arrowHotspot(pitch,yaw,sceneId){
+  return {
+    pitch: pitch,
+    yaw: yaw,
+    type: "custom",
+    createTooltipFunc: navArrowHotspot,
+    createTooltipArgs: {icon: roomArrows[sceneId], sceneId: sceneId}
+  };
+}
+
+/* Floor Hotspot Generator */
+function floorHotspot(pitch,yaw,sceneId){
+  return {
+    pitch: pitch,
+    yaw: yaw,
+    type: "custom",
+    createTooltipFunc: walkHotspot,
+    createTooltipArgs: {sceneId: sceneId}
+  };
+}
+
+/* ---------- Evenly Distribute Painting Hotspots ---------- */
+function generatePaintingHotspots(roomPaintings,startYaw=0,endYaw=320){
+  const step = (endYaw - startYaw) / (roomPaintings.length - 1);
+  return roomPaintings.map((p,i)=>{
+    let yaw = startYaw + i*step;
+    return paintingHotspot(-3,yaw,p.image,p.title,p.audio);
+  });
+}
+
+/* ---------- Hotspots for Rooms ---------- */
+const hotspots = {};
+
+/* Room1 paintings */
+const room1Paintings = [
+  {image:"paintings/painting1.jpg", title:"Painting 1", audio:"audio/painting1.mp3"},
+  {image:"paintings/painting2.jpg", title:"Painting 2", audio:"audio/painting2.mp3"},
+  {image:"paintings/painting3.jpg", title:"Painting 3", audio:"audio/painting3.mp3"},
+  {image:"paintings/painting4.jpg", title:"Painting 4", audio:"audio/painting4.mp3"},
+  {image:"paintings/painting5.jpg", title:"Painting 5", audio:"audio/painting5.mp3"},
+  {image:"paintings/painting6.jpg", title:"Painting 6", audio:"audio/painting6.mp3"},
+  {image:"paintings/painting7.jpg", title:"Painting 7", audio:"audio/painting7.mp3"},
+  {image:"paintings/painting8.jpg", title:"Painting 8", audio:"audio/painting8.mp3"},
+  {image:"paintings/painting9.jpg", title:"Painting 9", audio:"audio/painting9.mp3"},
+  {image:"paintings/painting10.jpg", title:"Painting 10", audio:"audio/painting10.mp3"}
+];
+hotspots.Room1 = [
+  ...generatePaintingHotspots(room1Paintings,0,320),
+
+  floorHotspot(-20,180,"Room2"),
+  arrowHotspot(0,250,"Room2")
+];
+
+/* Room2 paintings */
+const room2Paintings = [
+  {image:"paintings/painting11.jpg", title:"The aim.", audio:"audio/painting11.mp3"},
+  {image:"paintings/painting12.jpg", title:"The process.", audio:"audio/painting12.mp3"},
+  {image:"paintings/painting13.jpg", title:"The result.", audio:"audio/painting13.mp3"},
+  {image:"paintings/painting14.jpg", title:"The cheerleader.", audio:"audio/painting14.mp3"},
+  {image:"paintings/painting15.jpg", title:"The result nr.2.", audio:"audio/painting15.mp3"},
+  {image:"paintings/painting16.jpg", title:"Painting 16", audio:"audio/painting16.mp3"},
+  {image:"paintings/painting17.jpg", title:"Painting 17", audio:"audio/painting17.mp3"},
+  {image:"paintings/painting18.jpg", title:"Painting 18", audio:"audio/painting18.mp3"},
+  {image:"paintings/painting19.jpg", title:"Painting 19", audio:"audio/painting19.mp3"},
+  {image:"paintings/painting20.jpg", title:"Painting 20", audio:"audio/painting20.mp3"}
+];
+hotspots.Room2 = [
+  ...generatePaintingHotspots(room2Paintings,0,320),
+  floorHotspot(-20,180,"Room3"),
+  arrowHotspot(0,250,"Room3"),
+  arrowHotspot(0,280,"Room1")
+];
+
+/* Room3 paintings */
+const room3Paintings = [
+  {image:"paintings/painting21.jpg", title:"Painting 21", audio:"audio/painting21.mp3"},
+  {image:"paintings/painting22.jpg", title:"Painting 22", audio:"audio/painting22.mp3"},
+  {image:"paintings/painting23.jpg", title:"Painting 23", audio:"audio/painting23.mp3"},
+  {image:"paintings/painting24.jpg", title:"Painting 24", audio:"audio/painting24.mp3"},
+  {image:"paintings/painting25.jpg", title:"Painting 25", audio:"audio/painting25.mp3"},
+  {image:"paintings/painting26.jpg", title:"Painting 26", audio:"audio/painting26.mp3"},
+  {image:"paintings/painting27.jpg", title:"Painting 27", audio:"audio/painting27.mp3"},
+  {image:"paintings/painting28.jpg", title:"Painting 28", audio:"audio/painting28.mp3"},
+  {image:"paintings/painting29.jpg", title:"Painting 29", audio:"audio/painting29.mp3"},
+  {image:"paintings/painting30.jpg", title:"Painting 30", audio:"audio/painting30.mp3"}
+];
+hotspots.Room3 = [
+  ...generatePaintingHotspots(room3Paintings,0,320),
+  floorHotspot(-20,180,"Room2"),
+  arrowHotspot(0,250,"Room2")
+];
+
+/* ---------- Initialize Viewer ---------- */
+var viewer = pannellum.viewer("panorama",{
+  "default": {
+    firstScene: "Room1",
+    author: "Virtual Museum",
+    sceneFadeDuration:1000,
+    autoLoad: true,
+    loadingLabel: "Queer Museum. Treat everyone respectfully, we all are a piece of art in the end."
+  },
+  "scenes": {
+    Room1: { panorama: museumRooms.Room1, hotSpots: hotspots.Room1 },
+    Room2: { panorama: museumRooms.Room2, hotSpots: hotspots.Room2 },
+    Room3: { panorama: museumRooms.Room3, hotSpots: hotspots.Room3 }
+  }
+});
+</script>
+
+</body>
+</html>
